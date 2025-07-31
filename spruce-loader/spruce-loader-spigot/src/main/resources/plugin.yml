@@ -1,0 +1,4 @@
+name: Spruce
+version: 1.0.0
+main: org.spruce.loader.spigot.SpruceLoaderSpigotPlugin
+api-version: 1.20

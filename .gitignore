@@ -1,0 +1,60 @@
+# === Gradle wrapper ===
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# === IntelliJ IDEA / Android Studio ===
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# === macOS ===
+.DS_Store
+
+# === Kotlin / Java / Compiler stuff ===
+*.class
+*.log
+*.jar
+*.war
+*.ear
+
+# === Generated KSP (Kotlin Symbol Processing) ===
+build/generated/
+
+# === Generated Protobuf ===
+**/build/generated/**
+
+# === Runtime ===
+out/
+bin/
+
+# === OS / Editor backups ===
+*.swp
+*~
+*.bak
+*.tmp
+
+# === Node/npm cache (if any) ===
+node_modules/
+npm-debug.log
+
+# === VSCode (just in case) ===
+.vscode/
+
+# === Test coverage / reports ===
+coverage/
+*.lcov
+*.exec
+
+# === Distribution archives ===
+*.zip
+*.tar
+*.tar.gz
+dist/
+
+# === Local dev overrides ===
+local.properties
+.env
+.env.*
