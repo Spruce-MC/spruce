@@ -1,8 +1,6 @@
 # === Gradle wrapper ===
 .gradle/
 build/
-!gradle/wrapper/gradle-wrapper.jar
-!gradle/wrapper/gradle-wrapper.properties
 
 # === IntelliJ IDEA / Android Studio ===
 .idea/
@@ -58,3 +56,8 @@ dist/
 local.properties
 .env
 .env.*
+
+# === Except Gradle Wrapper ===
+!gradle/wrapper/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
