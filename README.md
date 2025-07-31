@@ -239,7 +239,7 @@ class ShopManager {
                 to = SHOP_ACCOUNT,
                 amount = 100.0
             ),
-            TransferResponse::class
+            TransferResponse::class.java
         )
 
         gateway.call(call).whenComplete { response, error ->
