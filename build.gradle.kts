@@ -43,6 +43,17 @@ subprojects {
                         version = project.version.toString()
                     }
                 }
+
+                repositories {
+                    maven {
+                        name = "GitHubPackages"
+                        url = uri("https://maven.pkg.github.com/Spruce-MC/spruce")
+                        credentials {
+                            username = project.findProperty("gpr.user") as String? ?: System.getenv("USERNAME")
+                            password = project.findProperty("gpr.key") as String? ?: System.getenv("TOKEN")
+                        }
+                    }
+                }
             }
         } else {
             tasks.withType<PublishToMavenLocal>().configureEach {

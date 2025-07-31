@@ -1,4 +1,4 @@
-name: Build Spruce
+name: Build & Publish
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
 
     steps:
@@ -30,8 +31,14 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
-      - name: 🛠 Grant execute permissions for gradlew
+      - name: 🛠 Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: 🚀 Build project
+      - name: 🚀 Build all modules
         run: ./gradlew clean build --no-daemon
+
+      - name: 📦 Publish to GitHub Packages
+        run: ./gradlew :spruce-api:publish :spruce-processor:spruce-processor-spigot:publish :spruce-processor:spruce-processor-velocity:publish
+        env:
+          USERNAME: ${{ secrets.GITHUB_ACTOR }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
