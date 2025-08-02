@@ -69,9 +69,9 @@ dependencies {
 ```
 
 
-✅ **Minimum Java version**: 17
+ **Minimum Java version**: 17
 
-✅ **Recommended Java version**: 21
+**Recommended Java version**: 21
 
 ---
 
@@ -112,10 +112,10 @@ class MyConfig {
     lateinit var welcomeMessage: String
     lateinit var features: Features
 
-    data class Features(
-        val broadcastJoins: Boolean = true,
-        val customCommands: Boolean = true
-    )
+    class Features {
+        lateinit var broadcastJoin: List<String>
+        lateinit var customCommand: String
+    }
 }
 ```
 
