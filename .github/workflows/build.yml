@@ -28,6 +28,7 @@ jobs:
       - name: Try publishing (ignore version conflicts)
         run: |
           ./gradlew :spruce-api:publish \
+                     :spruce-processor:spruce-processor-commons:publish \
                      :spruce-processor:spruce-processor-spigot:publish \
                      :spruce-processor:spruce-processor-velocity:publish \
                      --no-daemon || echo "⚠️ Already published or failed — skipping."

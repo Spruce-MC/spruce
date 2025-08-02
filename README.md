@@ -32,6 +32,49 @@
 
 ---
 
+## 📦 Installation
+
+To use **Spruce** in your Minecraft plugin or microservice, add the following to your `build.gradle.kts`:
+
+### 🔗 Repository
+
+```kotlin
+repositories {
+    maven("https://repo.sprucemc.tech/repository/maven-releases/")
+}
+```
+
+### 📦 Dependencies
+
+```kotlin
+dependencies {
+    implementation("org.spruce:spruce-api:1.0.0")
+}
+```
+
+If you are using annotation-based features (e.g. `@SprucePlugin`, `@FileConfig`, etc.), add the plugin and the appropriate processor:
+
+```kotlin
+plugins {
+    id("com.google.devtools.ksp") version "1.9.23-1.0.20"
+}
+
+dependencies {
+    // For Spigot plugins
+    ksp("org.spruce:spruce-processor-spigot:1.0.0")
+
+    // Or for Velocity plugins
+    ksp("org.spruce:spruce-processor-velocity:1.0.0")
+}
+```
+
+
+✅ **Minimum Java version**: 17
+
+✅ **Recommended Java version**: 21
+
+---
+
 ## 🚀 Your First Plugin
 
 ```kotlin
