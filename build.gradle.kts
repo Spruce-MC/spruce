@@ -46,13 +46,23 @@ subprojects {
 
                 repositories {
                     maven {
+                        name = "SpruceRepo"
+                        url = uri("https://repo.sprucemc.tech/repository/maven-releases/")
+                        credentials {
+                            username = project.findProperty("nexusUser") as String? ?: System.getenv("NEXUS_USERNAME")
+                            password = project.findProperty("nexusPassword") as String? ?: System.getenv("NEXUS_PASSWORD")
+                        }
+                    }
+
+                    /* Temporarily not needed
+                    maven {
                         name = "GitHubPackages"
                         url = uri("https://maven.pkg.github.com/Spruce-MC/spruce")
                         credentials {
                             username = project.findProperty("gpr.user") as String? ?: System.getenv("USERNAME")
                             password = project.findProperty("gpr.key") as String? ?: System.getenv("TOKEN")
                         }
-                    }
+                    }*/
                 }
             }
         } else {
