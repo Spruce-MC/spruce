@@ -9,7 +9,6 @@ import java.lang.annotation.*;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -30,8 +29,6 @@ public abstract class SpruceServiceBase extends AbstractSpruceService {
 
     protected final Map<String, Method> handlers = new ConcurrentHashMap<>();
 
-    protected final ExecutorService streamExecutor;
-
     protected final CountDownLatch shutdownLatch = new CountDownLatch(1);
 
     public SpruceServiceBase(String serviceName) {
@@ -43,12 +40,6 @@ public abstract class SpruceServiceBase extends AbstractSpruceService {
         this.serviceName = serviceName;
         this.consumerName = serviceName + "-" + UUID.randomUUID().toString().substring(0, 8);
 
-        this.streamExecutor = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "spruce-stream-" + serviceName);
-            t.setDaemon(false);
-            return t;
-        });
-
         registerActions();
         createGroup(REQUEST_STREAM, SERVICE_GROUP);
     }
@@ -56,7 +47,6 @@ public abstract class SpruceServiceBase extends AbstractSpruceService {
     @Override
     public void shutdown() {
         super.shutdown();
-        streamExecutor.shutdownNow();
         shutdownLatch.countDown();
     }
 
@@ -70,7 +60,6 @@ public abstract class SpruceServiceBase extends AbstractSpruceService {
     public void start() {
         logger.info("Starting service: " + serviceName);
         super.start();
-        streamExecutor.submit(this::consumeLoop);
     }
 
     /**
@@ -107,6 +96,16 @@ public abstract class SpruceServiceBase extends AbstractSpruceService {
         );
     }
 
+    @Override
+    protected List<Map.Entry<String, List<StreamEntry>>> pollStream() {
+        return streamRedis.xreadGroup(
+                SERVICE_GROUP,
+                consumerName,
+                XReadGroupParams.xReadGroupParams().block(5000).count(10),
+                Map.of(REQUEST_STREAM, StreamEntryID.UNRECEIVED_ENTRY)
+        );
+    }
+
     protected String handleRequest(String action, String payloadJson) {
         try {
             Method method = handlers.get(action);
@@ -130,33 +129,6 @@ public abstract class SpruceServiceBase extends AbstractSpruceService {
         }
     }
 
-    private List<Map.Entry<String, List<StreamEntry>>> pollStream() {
-        return streamRedis.xreadGroup(
-                SERVICE_GROUP,
-                consumerName,
-                XReadGroupParams.xReadGroupParams().block(5000).count(10),
-                Map.of(REQUEST_STREAM, StreamEntryID.UNRECEIVED_ENTRY)
-        );
-    }
-
-    /**
-     * Main loop for consuming Redis Stream using XREADGROUP.
-     * Submits each entry to the worker pool for async handling.
-     */
-    private void consumeLoop() {
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
-                List<Map.Entry<String, List<StreamEntry>>> entries = pollStream();
-                if (entries != null) entries.forEach(this::dispatchStream);
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Error in consumeLoop", e);
-                if (e.getMessage().contains("NOGROUP")) {
-                    createGroup(REQUEST_STREAM, SERVICE_GROUP);
-                }
-            }
-        }
-    }
-
     private String error(String message) {
         try {
             return mapper.writeValueAsString(Map.of("status", "ERROR", "message", message));
@@ -165,7 +137,6 @@ public abstract class SpruceServiceBase extends AbstractSpruceService {
             return "ERROR";
         }
     }
-
 
     private void registerActions() {
         for (Method method : getClass().getDeclaredMethods()) {

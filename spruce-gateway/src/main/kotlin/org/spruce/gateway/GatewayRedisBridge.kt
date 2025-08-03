@@ -21,10 +21,11 @@ class GatewayRedisBridge(
     redisUrl,
     logger
 ) {
+    private val consumerName = "gateway-${System.getenv("GATEWAY_ID") ?: UUID.randomUUID().toString().take(8)}"
+
     private val pendingResponses = ConcurrentHashMap<String, (String) -> Unit>()
     private val responseStream: String = getResponseStream(gatewayId)
 
-    private val responseListenerExecutor = Executors.newSingleThreadExecutor()
     private val eventListenerExecutor = Executors.newSingleThreadExecutor()
     private val requestTimeoutExecutor = Executors.newSingleThreadScheduledExecutor()
 
@@ -51,9 +52,16 @@ class GatewayRedisBridge(
         }
     }
 
+    override fun pollStream(): MutableList<MutableMap.MutableEntry<String, MutableList<StreamEntry>>>? =
+        streamRedis.xreadGroup(
+            gatewayId,
+            consumerName,
+            XReadGroupParams.xReadGroupParams().block(5000).count(10),
+            mapOf(responseStream to StreamEntryID.UNRECEIVED_ENTRY)
+        )
+
     override fun shutdown() {
         super.shutdown()
-        responseListenerExecutor.shutdownNow()
         eventListenerExecutor.shutdownNow()
         requestTimeoutExecutor.shutdownNow()
     }
@@ -94,56 +102,6 @@ class GatewayRedisBridge(
                 "gatewayId" to gatewayId
             )
         )
-    }
-
-    fun startResponseListener() {
-        val consumerName = "gateway-${System.getenv("GATEWAY_ID") ?: UUID.randomUUID().toString().take(8)}"
-        logger.info("Starting response listener for stream '$responseStream' with consumer '$consumerName'.")
-
-        fun listen() {
-            if (Thread.currentThread().isInterrupted) return
-
-            responseListenerExecutor.submit {
-                try {
-                    val entries = streamRedis.xreadGroup(
-                        gatewayId,
-                        consumerName,
-                        XReadGroupParams.xReadGroupParams().block(5000).count(10),
-                        mapOf(responseStream to StreamEntryID.UNRECEIVED_ENTRY)
-                    )
-
-                    if (entries.isNullOrEmpty()) {
-                        listen()
-                        return@submit
-                    }
-
-                    entries.forEach { stream ->
-                        try {
-                            dispatchStream(stream)
-                        } catch (e: Exception) {
-                            logger.severe("Failed to dispatch entries from stream ${stream.key}: ${e.message}")
-                        }
-                    }
-
-                    listen()
-                } catch (e: Exception) {
-                    when {
-                        e.message?.contains("NOGROUP") == true -> {
-                            logger.warning("Consumer group '$gatewayId' not found for stream '$responseStream'")
-                            createGroup(responseStream, gatewayId)
-                            listen()
-                        }
-
-                        else -> {
-                            logger.warning("Error in response listener: ${e.message}. Retrying in 1s.")
-                            requestTimeoutExecutor.schedule({ listen() }, 1, TimeUnit.SECONDS)
-                        }
-                    }
-                }
-            }
-        }
-
-        listen()
     }
 
     /** ===================== Events via Pub/Sub ===================== */

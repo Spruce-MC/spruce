@@ -31,7 +31,6 @@ object GatewayServer {
         redis.startEventListener { eventType, payload ->
             service.broadcastEvent(eventType, payload)
         }
-        redis.startResponseListener()
 
         Runtime.getRuntime().addShutdownHook(Thread {
             logger.info("Shutdown requested. Closing resources...")

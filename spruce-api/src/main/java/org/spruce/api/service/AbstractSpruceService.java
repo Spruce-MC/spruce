@@ -39,6 +39,11 @@ public abstract class AbstractSpruceService extends GatewayEventResolver {
 
     protected final BlockingQueue<StreamEntryID> ackQueue = new LinkedBlockingQueue<>();
     protected final ExecutorService ackExecutor = Executors.newSingleThreadExecutor();
+    protected final ExecutorService streamExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "stream");
+        t.setDaemon(false);
+        return t;
+    });
     protected final ExecutorService workerPool = Executors.newFixedThreadPool(
             Integer.parseInt(System.getenv().getOrDefault("WORKER_THREADS", "8"))
     );
@@ -53,9 +58,15 @@ public abstract class AbstractSpruceService extends GatewayEventResolver {
     /**
      * Must be implemented by subclass.
      * Called for every Redis Stream entry received.
-     * Add entry ID to ackQueue manually when done.
+     * Adds entry ID to ackQueue manually when done.
      */
     protected abstract void handleEntry(StreamEntry entry);
+
+    /**
+     * Must be implemented by subclass.
+     * Called in consume loop to poll Redis Stream entries.
+     */
+    protected abstract List<Map.Entry<String, List<StreamEntry>>> pollStream();
 
     /**
      * Starts the acknowledgment loop in a separate thread.
@@ -63,6 +74,7 @@ public abstract class AbstractSpruceService extends GatewayEventResolver {
      */
     public void start() {
         ackExecutor.submit(this::ackLoop);
+        streamExecutor.submit(this::consumeLoop);
     }
 
     /**
@@ -105,6 +117,24 @@ public abstract class AbstractSpruceService extends GatewayEventResolver {
                 }
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Ack failed", e);
+            }
+        }
+    }
+
+    /**
+     * Main loop for consuming Redis Stream using XREADGROUP.
+     * Submits each entry to the worker pool for async handling.
+     */
+    private void consumeLoop() {
+        while (!Thread.currentThread().isInterrupted()) {
+            try {
+                List<Map.Entry<String, List<StreamEntry>>> entries = pollStream();
+                if (entries != null) entries.forEach(this::dispatchStream);
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Error in consumeLoop", e);
+                if (e.getMessage().contains("NOGROUP")) {
+                    createGroup(REQUEST_STREAM, SERVICE_GROUP);
+                }
             }
         }
     }
@@ -167,6 +197,7 @@ public abstract class AbstractSpruceService extends GatewayEventResolver {
         pubSubRedis.close();
         workerPool.shutdownNow();
         ackExecutor.shutdownNow();
+        streamExecutor.shutdownNow();
     }
 
     protected String getAckStream() {

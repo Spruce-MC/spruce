@@ -5,9 +5,6 @@ plugins {
     application
 }
 
-group = "org.spruce"
-version = "1.0.0"
-
 application {
     mainClass.set("org.spruce.gateway.GatewayServer")
 }
