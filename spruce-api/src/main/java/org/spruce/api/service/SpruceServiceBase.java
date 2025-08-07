@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 public abstract class SpruceServiceBase extends AbstractSpruceService {
 
     protected final String serviceName;
+    protected final String serviceGroup;
     protected final String consumerName;
 
     protected final Map<String, Method> handlers = new ConcurrentHashMap<>();
@@ -38,10 +39,11 @@ public abstract class SpruceServiceBase extends AbstractSpruceService {
     public SpruceServiceBase(String serviceName, String redisUrl) {
         super(redisUrl, Logger.getLogger(serviceName));
         this.serviceName = serviceName;
+        this.serviceGroup = SERVICE_GROUP + ":" + serviceName;
         this.consumerName = serviceName + "-" + UUID.randomUUID().toString().substring(0, 8);
 
         registerActions();
-        createGroup(REQUEST_STREAM, SERVICE_GROUP);
+        createGroup(REQUEST_STREAM, getServiceGroup());
     }
 
     @Override
@@ -99,11 +101,16 @@ public abstract class SpruceServiceBase extends AbstractSpruceService {
     @Override
     protected List<Map.Entry<String, List<StreamEntry>>> pollStream() {
         return streamRedis.xreadGroup(
-                SERVICE_GROUP,
+                getServiceGroup(),
                 consumerName,
                 XReadGroupParams.xReadGroupParams().block(5000).count(10),
                 Map.of(REQUEST_STREAM, StreamEntryID.UNRECEIVED_ENTRY)
         );
+    }
+
+    @Override
+    protected String getServiceGroup() {
+        return serviceGroup;
     }
 
     protected String handleRequest(String action, String payloadJson) {
@@ -208,5 +215,4 @@ public abstract class SpruceServiceBase extends AbstractSpruceService {
          */
         String value();
     }
-
 }

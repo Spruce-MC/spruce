@@ -133,7 +133,7 @@ public abstract class AbstractSpruceService extends GatewayEventResolver {
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Error in consumeLoop", e);
                 if (e.getMessage().contains("NOGROUP")) {
-                    createGroup(REQUEST_STREAM, SERVICE_GROUP);
+                    createGroup(REQUEST_STREAM, getServiceGroup());
                 }
             }
         }
@@ -205,6 +205,10 @@ public abstract class AbstractSpruceService extends GatewayEventResolver {
     }
 
     protected String getAckGroup() {
+        return getServiceGroup();
+    }
+
+    protected String getServiceGroup() {
         return SERVICE_GROUP;
     }
 

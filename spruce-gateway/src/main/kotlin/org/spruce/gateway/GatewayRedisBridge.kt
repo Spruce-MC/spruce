@@ -30,7 +30,7 @@ class GatewayRedisBridge(
     private val requestTimeoutExecutor = Executors.newSingleThreadScheduledExecutor()
 
     init {
-        createGroup(getResponseStream(gatewayId), gatewayId)
+        createGroup(getResponseStream(gatewayId), serviceGroup)
         start()
     }
 
@@ -54,7 +54,7 @@ class GatewayRedisBridge(
 
     override fun pollStream(): MutableList<MutableMap.MutableEntry<String, MutableList<StreamEntry>>>? =
         streamRedis.xreadGroup(
-            gatewayId,
+            serviceGroup,
             consumerName,
             XReadGroupParams.xReadGroupParams().block(5000).count(10),
             mapOf(responseStream to StreamEntryID.UNRECEIVED_ENTRY)
@@ -66,9 +66,9 @@ class GatewayRedisBridge(
         requestTimeoutExecutor.shutdownNow()
     }
 
-    override fun getAckStream(): String = responseStream
+    override fun getAckStream() = responseStream
 
-    override fun getAckGroup(): String = gatewayId
+    override fun getServiceGroup() = gatewayId
 
     /** ===================== Streams ===================== */
 
