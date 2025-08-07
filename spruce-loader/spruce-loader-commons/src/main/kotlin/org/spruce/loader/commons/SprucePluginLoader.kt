@@ -1,5 +1,6 @@
 package org.spruce.loader.commons
 
+import org.spruce.api.gateway.SpruceGatewayClient
 import org.spruce.api.plugin.SpruceContext
 import org.spruce.api.plugin.SprucePlugin
 import org.spruce.core.SpruceContextImpl
@@ -52,6 +53,25 @@ class SprucePluginLoader(
         jarFile.getEntry("META-INF/spruce.configurations.txt")?.let { entry ->
             jarFile.getInputStream(entry).bufferedReader().readLines().forEach { className ->
                 invokeGenerated(classLoader, "${className}__Beans", "register", arrayOf(SpruceContext::class.java), arrayOf(context), "config $className")
+            }
+        }
+
+        // Models
+        val gatewayClient = context.get(SpruceGatewayClient::class.java)
+        jarFile.getEntry("META-INF/spruce.models.txt")?.let { entry ->
+            jarFile.getInputStream(entry).bufferedReader().readLines().forEach { interfaceName ->
+                try {
+                    val interfaceClass = classLoader.loadClass(interfaceName)
+                    val proxyClass = classLoader.loadClass("${interfaceName}__Proxy")
+                    val constructor = proxyClass.getConstructor(Class.forName("org.spruce.api.gateway.SpruceGatewayClient"))
+                    val proxyInstance = constructor.newInstance(gatewayClient)
+
+                    @Suppress("UNCHECKED_CAST")
+                    context.register(interfaceClass as Class<Any>, proxyInstance as Any)
+                    logger.info("Loaded model proxy for $interfaceName")
+                } catch (e: Exception) {
+                    logger.warning("Failed to load proxy for $interfaceName: ${e.message}")
+                }
             }
         }
 
