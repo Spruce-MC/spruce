@@ -122,6 +122,10 @@ public abstract class SpruceServiceBase extends AbstractSpruceService {
                 result = method.invoke(this, param);
             }
 
+            if (result instanceof CompletableFuture<?> future) {
+                result = future.join();
+            }
+
             return mapper.writeValueAsString(result);
         } catch (Exception e) {
             logger.warning("Failed to handle request [" + action + "]: " + e.getMessage());
@@ -148,6 +152,27 @@ public abstract class SpruceServiceBase extends AbstractSpruceService {
 
                 handlers.put(annotation.value(), method);
                 logger.info("Registered action: " + annotation.value() + " → " + method.getName());
+            }
+        }
+
+        for (Class<?> iface : getClass().getInterfaces()) {
+            if (!iface.isAnnotationPresent(ServiceModel.class)) continue;
+
+            for (Method ifaceMethod : iface.getDeclaredMethods()) {
+                String action = ifaceMethod.getName();
+
+                ServiceCall call = ifaceMethod.getAnnotation(ServiceCall.class);
+                if (call != null) action = call.value();
+
+                try {
+                    Method implMethod = getClass().getMethod(ifaceMethod.getName(), ifaceMethod.getParameterTypes());
+                    if (!handlers.containsKey(action)) {
+                        handlers.put(action, implMethod);
+                        logger.info("Registered service model action: " + action + " → " + implMethod.getName());
+                    }
+                } catch (NoSuchMethodException e) {
+                    logger.warning("Missing implementation for service model method: " + ifaceMethod.getName());
+                }
             }
         }
     }

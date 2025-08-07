@@ -20,3 +20,5 @@ include("spruce-processor:spruce-processor-spigot")
 findProject(":spruce-processor:spruce-processor-spigot")?.name = "spruce-processor-spigot"
 include("spruce-processor:spruce-processor-velocity")
 findProject(":spruce-processor:spruce-processor-velocity")?.name = "spruce-processor-velocity"
+include("spruce-processor:spruce-processor-models")
+findProject(":spruce-processor:spruce-processor-models")?.name = "spruce-processor-models"

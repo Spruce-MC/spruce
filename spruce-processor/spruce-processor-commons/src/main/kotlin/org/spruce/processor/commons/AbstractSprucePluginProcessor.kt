@@ -10,7 +10,7 @@ import org.spruce.processor.commons.generator.impl.*
 import java.io.OutputStreamWriter
 
 abstract class AbstractSprucePluginProcessor(
-    private val environment: SymbolProcessorEnvironment
+    protected val environment: SymbolProcessorEnvironment
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -77,13 +77,17 @@ abstract class AbstractSprucePluginProcessor(
         GlobalEventListenerRegistryGenerator.process(component, environment)
     }
 
+    open fun processServiceModelProxy(component: KSClassDeclaration, environment: SymbolProcessorEnvironment): Boolean {
+        return ServiceModelProxyGenerator.process(component, environment)
+    }
+
     abstract fun processCommandRegistry(component: KSClassDeclaration, environment: SymbolProcessorEnvironment)
     abstract fun processEventListenerRegistry(component: KSClassDeclaration, environment: SymbolProcessorEnvironment)
     abstract fun processScheduledTaskRegistry(component: KSClassDeclaration, environment: SymbolProcessorEnvironment)
     abstract fun processFileConfigLoader(component: KSClassDeclaration, environment: SymbolProcessorEnvironment)
 }
 
-private fun SymbolProcessorEnvironment.writeToFile(fileName: String, lines: List<String>) {
+fun SymbolProcessorEnvironment.writeToFile(fileName: String, lines: List<String>) {
     val file = this.codeGenerator.createNewFile(
         Dependencies(false), "META-INF", fileName, "txt"
     )

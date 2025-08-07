@@ -19,7 +19,7 @@ import java.util.logging.Logger
 @Plugin(
     id = "spruce",
     name = "Spruce",
-    version = "1.0.0",
+    version = "1.0.1",
     authors = ["Spruce"]
 )
 class SpruceLoaderVelocityPlugin @Inject constructor(
