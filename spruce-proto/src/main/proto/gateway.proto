@@ -10,6 +10,10 @@ service Gateway {
   rpc CallService (CallServiceRequest) returns (CallServiceResponse);
   rpc EventStream (EventStreamRequest) returns (stream EventStreamResponse);
   rpc EmitEvent (EmitEventRequest) returns (google.protobuf.Empty);
+
+  rpc AcquireLock (AcquireLockRequest) returns (AcquireLockResponse);
+  rpc ReleaseLock (ReleaseLockRequest) returns (ReleaseLockResponse);
+  rpc RefreshLock (RefreshLockRequest) returns (RefreshLockResponse);
 }
 
 message CallServiceRequest {
@@ -34,4 +38,35 @@ message EventStreamResponse {
 message EmitEventRequest {
   string type = 1;
   string payload = 2;
+}
+
+message AcquireLockRequest {
+  string key = 1;
+  string owner_id = 2;
+  int64 ttl_millis = 3;
+  int64 wait_millis = 4;
+}
+
+message AcquireLockResponse {
+  bool acquired = 1;
+  string token = 2;
+}
+
+message ReleaseLockRequest {
+  string key = 1;
+  string token = 2;
+}
+
+message ReleaseLockResponse {
+  bool released = 1;
+}
+
+message RefreshLockRequest {
+  string key = 1;
+  string token = 2;
+  int64 ttl_millis = 3;
+}
+
+message RefreshLockResponse {
+  bool refreshed = 1;
 }

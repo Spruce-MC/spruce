@@ -65,6 +65,76 @@ class GatewayServiceImpl(
         }
     }
 
+    override fun acquireLock(
+        request: AcquireLockRequest,
+        responseObserver: StreamObserver<AcquireLockResponse>
+    ) {
+        try {
+            val token = UUID.randomUUID().toString()
+
+            val acquired = redis.acquireLock(
+                key = request.key,
+                ownerId = request.ownerId,
+                token = token,
+                ttlMillis = request.ttlMillis,
+                waitMillis = request.waitMillis
+            )
+
+            responseObserver.onNext(
+                AcquireLockResponse.newBuilder()
+                    .setAcquired(acquired)
+                    .setToken(if (acquired) token else "")
+                    .build()
+            )
+            responseObserver.onCompleted()
+        } catch (e: Exception) {
+            responseObserver.onError(e)
+        }
+    }
+
+    override fun releaseLock(
+        request: ReleaseLockRequest,
+        responseObserver: StreamObserver<ReleaseLockResponse>
+    ) {
+        try {
+            val released = redis.releaseLock(
+                key = request.key,
+                token = request.token
+            )
+
+            responseObserver.onNext(
+                ReleaseLockResponse.newBuilder()
+                    .setReleased(released)
+                    .build()
+            )
+            responseObserver.onCompleted()
+        } catch (e: Exception) {
+            responseObserver.onError(e)
+        }
+    }
+
+    override fun refreshLock(
+        request: RefreshLockRequest,
+        responseObserver: StreamObserver<RefreshLockResponse>
+    ) {
+        try {
+            val refreshed = redis.refreshLock(
+                key = request.key,
+                token = request.token,
+                ttlMillis = request.ttlMillis
+            )
+
+            responseObserver.onNext(
+                RefreshLockResponse.newBuilder()
+                    .setRefreshed(refreshed)
+                    .build()
+            )
+            responseObserver.onCompleted()
+        } catch (e: Exception) {
+            responseObserver.onError(e)
+        }
+    }
+
     fun broadcastEvent(type: String, payload: String) {
         val response = EventStreamResponse.newBuilder()
             .setType(type)

@@ -1,8 +1,10 @@
 package org.spruce.loader.commons.gateway
 
 import org.spruce.api.gateway.SpruceGatewayClient
+import org.spruce.api.lock.DistributedLockManager
 import org.spruce.api.plugin.SpruceContext
 import org.spruce.core.SpruceGatewayClientImpl
+import org.spruce.core.lock.GatewayDistributedLockManager
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
@@ -13,15 +15,20 @@ class SpruceGatewayManager(
     private val config: GatewayConfig
 ) {
     private val scheduler = Executors.newScheduledThreadPool(1)
-    private var gatewayClient = SpruceGatewayClientImpl(logger, config.host, config.port, config.serverId)
+
+    private val gatewayClient = SpruceGatewayClientImpl(logger, config.host, config.port, config.serverId)
+    private val lockManager = GatewayDistributedLockManager(gatewayClient)
 
     init {
         context.register(SpruceGatewayClient::class.java, gatewayClient)
+        context.register(DistributedLockManager::class.java, lockManager)
     }
 
     fun start() {
         if (config.enabled) {
-            scheduler.run { connectWithRetry() }
+            scheduler.execute {
+                connectWithRetry()
+            }
         }
     }
 

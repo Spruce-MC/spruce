@@ -10,6 +10,7 @@ import redis.clients.jedis.resps.StreamEntry
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
@@ -145,6 +146,127 @@ class GatewayRedisBridge(
         }
 
         subscribe()
+    }
+
+    /** ===================== Distributed Locks ===================== */
+
+    private val lockPrefix = "spruce:lock:"
+
+    private val releaseLockScript = """
+        if redis.call("GET", KEYS[1]) == ARGV[1] then
+            return redis.call("DEL", KEYS[1])
+        else
+            return 0
+        end
+    """.trimIndent()
+
+    private val refreshLockScript = """
+        if redis.call("GET", KEYS[1]) == ARGV[1] then
+            return redis.call("PEXPIRE", KEYS[1], ARGV[2])
+        else
+            return 0
+        end
+    """.trimIndent()
+
+    fun acquireLock(
+        key: String,
+        ownerId: String,
+        token: String,
+        ttlMillis: Long,
+        waitMillis: Long
+    ): Boolean {
+        require(key.isNotBlank()) { "Lock key must not be blank" }
+        require(token.isNotBlank()) { "Lock token must not be blank" }
+        require(ttlMillis > 0) { "Lock ttl must be positive" }
+        require(waitMillis >= 0) { "Lock acquire timeout must not be negative" }
+
+        val redisKey = lockKey(key)
+
+        if (waitMillis == 0L) {
+            val result = streamRedis.set(
+                redisKey,
+                token,
+                redis.clients.jedis.params.SetParams.setParams()
+                    .nx()
+                    .px(ttlMillis)
+            )
+
+            return result == "OK"
+        }
+
+        val deadline = System.currentTimeMillis() + waitMillis
+
+        var backoff = 10L
+        val maxBackoff = 100L
+
+        while (System.currentTimeMillis() < deadline) {
+            val result = streamRedis.set(
+                redisKey,
+                token,
+                redis.clients.jedis.params.SetParams.setParams()
+                    .nx()
+                    .px(ttlMillis)
+            )
+
+            if (result == "OK") {
+                logger.fine(
+                    "Lock acquired: key=$key ownerId=$ownerId ttl=${ttlMillis}ms"
+                )
+                return true
+            }
+
+            val jitter = ThreadLocalRandom.current()
+                .nextLong(backoff / 2, backoff + 1)
+
+            val remaining = deadline - System.currentTimeMillis()
+
+            if (remaining <= 0) {
+                break
+            }
+
+            Thread.sleep(minOf(jitter, remaining))
+            backoff = minOf(backoff * 2, maxBackoff)
+        }
+
+        return false
+    }
+
+    fun releaseLock(
+        key: String,
+        token: String
+    ): Boolean {
+        require(key.isNotBlank()) { "Lock key must not be blank" }
+        require(token.isNotBlank()) { "Lock token must not be blank" }
+
+        val result = streamRedis.eval(
+            releaseLockScript,
+            listOf(lockKey(key)),
+            listOf(token)
+        )
+
+        return result == 1L
+    }
+
+    fun refreshLock(
+        key: String,
+        token: String,
+        ttlMillis: Long
+    ): Boolean {
+        require(key.isNotBlank()) { "Lock key must not be blank" }
+        require(token.isNotBlank()) { "Lock token must not be blank" }
+        require(ttlMillis > 0) { "Lock ttl must be positive" }
+
+        val result = streamRedis.eval(
+            refreshLockScript,
+            listOf(lockKey(key)),
+            listOf(token, ttlMillis.toString())
+        )
+
+        return result == 1L
+    }
+
+    private fun lockKey(key: String): String {
+        return lockPrefix + key
     }
 
     class RequestTimeoutException(requestId: String) : RuntimeException("Request timed out: $requestId")

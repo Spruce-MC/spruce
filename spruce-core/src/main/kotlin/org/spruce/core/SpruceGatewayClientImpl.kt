@@ -31,6 +31,12 @@ class SpruceGatewayClientImpl(
     private val serverId: String
 ): GatewayEventResolver(), SpruceGatewayClient {
 
+    lateinit var blockingStub: GatewayGrpc.GatewayBlockingStub
+        private set
+
+    lateinit var futureStub: GatewayGrpc.GatewayFutureStub
+        private set
+
     private lateinit var channel: ManagedChannel
     private lateinit var stub: GatewayGrpc.GatewayStub
     private val connected = AtomicBoolean(false)
@@ -51,7 +57,7 @@ class SpruceGatewayClientImpl(
             channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build()
-            stub = GatewayGrpc.newStub(channel)
+            createStubs()
             connected.set(true)
             startEventStream()
             logger.info("Reconnected to Spruce Gateway!")
@@ -68,7 +74,7 @@ class SpruceGatewayClientImpl(
             .usePlaintext()
             .build()
 
-        stub = GatewayGrpc.newStub(channel)
+        createStubs()
         connected.set(true)
         logger.info("Connected to Spruce Gateway at $host:$port")
 
@@ -187,5 +193,11 @@ class SpruceGatewayClientImpl(
         handlers[event::class.java]?.forEach { handler ->
             handler.accept(event)
         }
+    }
+
+    private fun createStubs() {
+        stub = GatewayGrpc.newStub(channel)
+        blockingStub = GatewayGrpc.newBlockingStub(channel)
+        futureStub = GatewayGrpc.newFutureStub(channel)
     }
 }

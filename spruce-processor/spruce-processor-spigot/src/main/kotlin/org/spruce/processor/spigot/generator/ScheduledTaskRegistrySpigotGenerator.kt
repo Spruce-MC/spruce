@@ -5,6 +5,7 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import org.spruce.processor.commons.generator.CodeGenerator
+import org.spruce.processor.commons.generator.lock.LockInvocationGenerator
 import java.io.OutputStreamWriter
 
 object ScheduledTaskRegistrySpigotGenerator : CodeGenerator {
@@ -14,20 +15,25 @@ object ScheduledTaskRegistrySpigotGenerator : CodeGenerator {
             .withIndex()
             .filter { (_, fn) ->
                 fn.annotations.any {
-                    it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.plugin.Scheduled"
+                    it.annotationType.resolve().declaration.qualifiedName?.asString() ==
+                            "org.spruce.api.plugin.Scheduled"
                 }
             }
+            .toList()
 
-        if (methods.none()) return false
+        if (methods.isEmpty()) return false
 
         val packageName = clazz.containingFile?.packageName?.asString()?.trim()
             ?: throw IllegalStateException("Can't determine package for ${clazz.simpleName.asString()}")
 
         val simpleName = clazz.simpleName.asString()
         val fileName = "${simpleName}__Scheduled"
+        val hasLocks = methods.any { (_, fn) -> LockInvocationGenerator.hasLock(fn) }
 
         val file = environment.codeGenerator.createNewFile(
-            Dependencies(false), packageName, fileName
+            Dependencies(false),
+            packageName,
+            fileName
         )
 
         OutputStreamWriter(file, Charsets.UTF_8).use { writer ->
@@ -36,15 +42,23 @@ object ScheduledTaskRegistrySpigotGenerator : CodeGenerator {
             writer.write("import org.bukkit.plugin.java.JavaPlugin\n")
             writer.write("import org.bukkit.scheduler.BukkitTask\n")
             writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            if (hasLocks) {
+                LockInvocationGenerator.writeImports(writer)
+            }
             writer.write("import ${clazz.qualifiedName!!.asString()}\n\n")
 
             writer.write("object $fileName {\n")
             writer.write("    fun register(ctx: SpruceContext, instance: $simpleName) {\n")
             writer.write("        val plugin = ctx.get(JavaPlugin::class.java)!!\n\n")
 
+            if (hasLocks) {
+                LockInvocationGenerator.writeLockManager(writer)
+            }
+
             for ((index, method) in methods) {
                 val annotation = method.annotations.first {
-                    it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.plugin.Scheduled"
+                    it.annotationType.resolve().declaration.qualifiedName?.asString() ==
+                            "org.spruce.api.plugin.Scheduled"
                 }
 
                 val delay = readLongValue("delay", annotation)
@@ -53,26 +67,42 @@ object ScheduledTaskRegistrySpigotGenerator : CodeGenerator {
                 val methodName = method.simpleName.asString()
 
                 val expectsTask = method.parameters.size == 1
+                val taskParamName = method.parameters.firstOrNull()?.name?.asString() ?: "task"
 
                 val runnableName = "runnable_$index"
                 val taskName = "task_$index"
 
+                val call = if (expectsTask) {
+                    "instance.$methodName($taskParamName)"
+                } else {
+                    "instance.$methodName()"
+                }
+
                 if (expectsTask) {
                     writer.write("        val ${taskName}_ref = arrayOfNulls<BukkitTask>(1)\n")
                     writer.write("        val $runnableName = Runnable {\n")
-                    writer.write("            try {\n")
-                    writer.write("                instance.$methodName(${taskName}_ref[0]!!)\n")
-                    writer.write("            } catch (e: Exception) {\n")
-                    writer.write("                plugin.logger.warning(\"Scheduled task '$simpleName.$methodName' threw: \" + e.message)\n")
-                    writer.write("            }\n")
+                    writer.write("            val $taskParamName = ${taskName}_ref[0]!!\n")
+
+                    if (LockInvocationGenerator.hasLock(method)) {
+                        val wrapped = LockInvocationGenerator.wrapCall(method, call)
+                            .prependIndent("            ")
+                        writer.write("$wrapped\n")
+                    } else {
+                        writer.write("            $call\n")
+                    }
+
                     writer.write("        }\n")
                 } else {
                     writer.write("        val $runnableName = Runnable {\n")
-                    writer.write("            try {\n")
-                    writer.write("                instance.$methodName()\n")
-                    writer.write("            } catch (e: Exception) {\n")
-                    writer.write("                plugin.logger.warning(\"Scheduled task '$simpleName.$methodName' threw: \" + e.message)\n")
-                    writer.write("            }\n")
+
+                    if (LockInvocationGenerator.hasLock(method)) {
+                        val wrapped = LockInvocationGenerator.wrapCall(method, call)
+                            .prependIndent("            ")
+                        writer.write("$wrapped\n")
+                    } else {
+                        writer.write("            $call\n")
+                    }
+
                     writer.write("        }\n")
                 }
 
