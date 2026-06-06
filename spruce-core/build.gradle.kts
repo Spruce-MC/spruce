@@ -9,5 +9,7 @@ dependencies {
 
     implementation("com.google.protobuf:protobuf-java:3.25.2")
 
+    implementation("redis.clients:jedis:5.1.0")
+
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
 }

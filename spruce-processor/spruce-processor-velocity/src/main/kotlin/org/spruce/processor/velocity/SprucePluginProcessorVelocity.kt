@@ -2,7 +2,7 @@ package org.spruce.processor.velocity
 
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import org.spruce.processor.commons.AbstractSprucePluginProcessor
+import org.spruce.processor.plugins.AbstractSprucePluginProcessor
 import org.spruce.processor.velocity.generator.CommandRegistryVelocityGenerator
 import org.spruce.processor.velocity.generator.EventListenerRegistryVelocityGenerator
 import org.spruce.processor.velocity.generator.FileConfigLoaderVelocityGenerator

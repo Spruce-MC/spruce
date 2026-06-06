@@ -4,7 +4,7 @@ import org.bukkit.Server
 import org.bukkit.plugin.java.JavaPlugin
 import org.spruce.api.plugin.SpruceLoaderPlugin
 import org.spruce.core.SpruceContextImpl
-import org.spruce.loader.commons.SpruceLoaderBootstrap
+import org.spruce.loader.plugins.SpruceLoaderBootstrap
 
 class SpruceLoaderSpigotPlugin : JavaPlugin(), SpruceLoaderPlugin {
 

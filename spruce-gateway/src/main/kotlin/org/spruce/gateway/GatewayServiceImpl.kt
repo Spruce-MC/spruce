@@ -3,18 +3,25 @@ package org.spruce.gateway
 import com.google.protobuf.Empty
 import io.grpc.stub.ServerCallStreamObserver
 import io.grpc.stub.StreamObserver
+import org.spruce.api.lock.DistributedLock
+import org.spruce.core.lock.redis.RedisDistributedLockManager
 import org.spruce.proto.*
-import java.util.*
+import java.time.Duration
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
 
 class GatewayServiceImpl(
-    private val redis: GatewayRedisBridge
+    private val redis: GatewayRedisBridge,
+    private val lockManager: RedisDistributedLockManager
 ) : GatewayGrpc.GatewayImplBase() {
 
     private val logger = Logger.getLogger("GatewayService")
     private val eventStreams = CopyOnWriteArrayList<ServerCallStreamObserver<EventStreamResponse>>()
+
+    private val activeLocks = ConcurrentHashMap<String, DistributedLock>()
 
     override fun emitEvent(
         request: EmitEventRequest,
@@ -37,18 +44,27 @@ class GatewayServiceImpl(
             cancelled.set(true)
         }
 
-        redis.sendRequest(requestId, request.service, request.action, request.payload, { response ->
-            if (!cancelled.get()) {
-                responseObserver.onNext(
-                    CallServiceResponse.newBuilder().setResult(response).build()
-                )
-                responseObserver.onCompleted()
+        redis.sendRequest(
+            requestId,
+            request.service,
+            request.action,
+            request.payload,
+            { response ->
+                if (!cancelled.get()) {
+                    responseObserver.onNext(
+                        CallServiceResponse.newBuilder()
+                            .setResult(response)
+                            .build()
+                    )
+                    responseObserver.onCompleted()
+                }
+            },
+            { error ->
+                if (!cancelled.get()) {
+                    responseObserver.onError(error)
+                }
             }
-        }, { error ->
-            if (!cancelled.get()) {
-                responseObserver.onError(error)
-            }
-        })
+        )
     }
 
     override fun eventStream(
@@ -57,11 +73,16 @@ class GatewayServiceImpl(
     ) {
         val serverObserver = responseObserver as ServerCallStreamObserver<EventStreamResponse>
         eventStreams.add(serverObserver)
-        logger.info("Client subscribed to event stream (serverId=${request.serverId}), total=${eventStreams.size}")
+
+        logger.info(
+            "Client subscribed to event stream (serverId=${request.serverId}), total=${eventStreams.size}"
+        )
 
         serverObserver.setOnCancelHandler {
             eventStreams.remove(serverObserver)
-            logger.info("Client disconnected from event stream (serverId=${request.serverId}), remaining=${eventStreams.size}")
+            logger.info(
+                "Client disconnected from event stream (serverId=${request.serverId}), remaining=${eventStreams.size}"
+            )
         }
     }
 
@@ -70,20 +91,20 @@ class GatewayServiceImpl(
         responseObserver: StreamObserver<AcquireLockResponse>
     ) {
         try {
-            val token = UUID.randomUUID().toString()
-
-            val acquired = redis.acquireLock(
-                key = request.key,
-                ownerId = request.ownerId,
-                token = token,
-                ttlMillis = request.ttlMillis,
-                waitMillis = request.waitMillis
+            val lock = lockManager.acquire(
+                request.key,
+                Duration.ofMillis(request.ttlMillis),
+                Duration.ofMillis(request.waitMillis)
             )
+
+            if (lock != null) {
+                activeLocks[lock.token] = lock
+            }
 
             responseObserver.onNext(
                 AcquireLockResponse.newBuilder()
-                    .setAcquired(acquired)
-                    .setToken(if (acquired) token else "")
+                    .setAcquired(lock != null)
+                    .setToken(lock?.token ?: "")
                     .build()
             )
             responseObserver.onCompleted()
@@ -97,10 +118,8 @@ class GatewayServiceImpl(
         responseObserver: StreamObserver<ReleaseLockResponse>
     ) {
         try {
-            val released = redis.releaseLock(
-                key = request.key,
-                token = request.token
-            )
+            val lock = activeLocks.remove(request.token)
+            val released = lock?.release() ?: false
 
             responseObserver.onNext(
                 ReleaseLockResponse.newBuilder()
@@ -118,11 +137,12 @@ class GatewayServiceImpl(
         responseObserver: StreamObserver<RefreshLockResponse>
     ) {
         try {
-            val refreshed = redis.refreshLock(
-                key = request.key,
-                token = request.token,
-                ttlMillis = request.ttlMillis
-            )
+            val lock = activeLocks[request.token]
+            val refreshed = lock?.refresh() ?: false
+
+            if (!refreshed) {
+                activeLocks.remove(request.token)
+            }
 
             responseObserver.onNext(
                 RefreshLockResponse.newBuilder()
@@ -150,5 +170,17 @@ class GatewayServiceImpl(
                 true
             }
         }
+    }
+
+    fun shutdown() {
+        activeLocks.values.forEach { lock ->
+            try {
+                lock.release()
+            } catch (e: Exception) {
+                logger.warning("Failed to release lock ${lock.key}: ${e.message}")
+            }
+        }
+
+        activeLocks.clear()
     }
 }

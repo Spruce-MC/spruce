@@ -6,6 +6,7 @@ plugins {
 dependencies {
     implementation(project(":spruce-api"))
     implementation(project(":spruce-processor:spruce-processor-commons"))
+    implementation(project(":spruce-processor:spruce-processor-plugins"))
 
     implementation("com.google.devtools.ksp:symbol-processing-api:1.9.22-1.0.16")
 }

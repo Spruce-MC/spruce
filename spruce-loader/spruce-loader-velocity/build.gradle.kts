@@ -28,6 +28,7 @@ dependencies {
     implementation(project(":spruce-core"))
     implementation(project(":spruce-api"))
     implementation(project(":spruce-loader:spruce-loader-commons"))
+    implementation(project(":spruce-loader:spruce-loader-plugins"))
 
     kapt("com.velocitypowered:velocity-api:3.2.0-SNAPSHOT")
 }

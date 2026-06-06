@@ -2,7 +2,7 @@ package org.spruce.processor.spigot
 
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import org.spruce.processor.commons.AbstractSprucePluginProcessor
+import org.spruce.processor.plugins.AbstractSprucePluginProcessor
 import org.spruce.processor.spigot.generator.CommandRegistrySpigotGenerator
 import org.spruce.processor.spigot.generator.EventListenerRegistrySpigotGenerator
 import org.spruce.processor.spigot.generator.FileConfigLoaderSpigotGenerator

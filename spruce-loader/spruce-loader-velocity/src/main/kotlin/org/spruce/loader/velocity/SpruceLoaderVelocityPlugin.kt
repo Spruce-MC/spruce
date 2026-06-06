@@ -12,7 +12,7 @@ import com.velocitypowered.api.proxy.ProxyServer
 import com.velocitypowered.api.scheduler.Scheduler
 import org.spruce.api.plugin.SpruceLoaderPlugin
 import org.spruce.core.SpruceContextImpl
-import org.spruce.loader.commons.SpruceLoaderBootstrap
+import org.spruce.loader.plugins.SpruceLoaderBootstrap
 import java.nio.file.Path
 import java.util.logging.Logger
 

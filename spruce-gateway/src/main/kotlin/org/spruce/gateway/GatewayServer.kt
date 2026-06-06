@@ -3,6 +3,7 @@ package org.spruce.gateway
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import kotlinx.coroutines.runBlocking
+import org.spruce.core.lock.redis.RedisDistributedLockManager
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
@@ -17,7 +18,8 @@ object GatewayServer {
         val redisUrl = System.getenv("REDIS_URL") ?: "redis://localhost:6379"
 
         val redis = GatewayRedisBridge(redisUrl, id, logger)
-        val service = GatewayServiceImpl(redis)
+        val lockManager = RedisDistributedLockManager(redis.redis)
+        val service = GatewayServiceImpl(redis, lockManager)
 
         val server: Server = ServerBuilder.forPort(port)
             .addService(service)
@@ -37,6 +39,7 @@ object GatewayServer {
             redis.shutdown()
             server.shutdown()
             server.awaitTermination(5, TimeUnit.SECONDS)
+            service.shutdown()
             logger.info("SpruceGateway stopped.")
         })
 

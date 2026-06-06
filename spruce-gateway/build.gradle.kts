@@ -37,8 +37,10 @@ dependencies {
     // gRPC + Kotlin stub
     implementation("io.grpc:grpc-kotlin-stub:1.4.1")
 
+    implementation(project(":spruce-service-common"))
     implementation(project(":spruce-api"))
     implementation(project(":spruce-proto"))
+    implementation(project(":spruce-core"))
 
     implementation("io.grpc:grpc-netty-shaded:1.64.0")
     implementation("io.grpc:grpc-protobuf:1.64.0")

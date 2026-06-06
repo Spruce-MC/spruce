@@ -19,4 +19,5 @@ dependencies {
     implementation(project(":spruce-core"))
     implementation(project(":spruce-api"))
     implementation(project(":spruce-loader:spruce-loader-commons"))
+    implementation(project(":spruce-loader:spruce-loader-plugins"))
 }
