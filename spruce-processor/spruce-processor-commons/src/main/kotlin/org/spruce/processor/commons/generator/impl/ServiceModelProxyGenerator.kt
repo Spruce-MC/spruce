@@ -4,6 +4,7 @@ import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.*
 import org.spruce.processor.commons.generator.CodeGenerator
+import org.spruce.processor.commons.generator.lock.LockInvocationGenerator
 import java.io.OutputStreamWriter
 import java.util.concurrent.CompletableFuture
 
@@ -21,10 +22,12 @@ object ServiceModelProxyGenerator : CodeGenerator {
             return false
         }
 
-        val serviceName = annotation.arguments.find { it.name?.asString() == "value" || it.name?.asString() == "service" }
+        val serviceName = annotation.arguments
+            .find { it.name?.asString() == "value" || it.name?.asString() == "service" }
             ?.value as? String ?: return false
 
-        val packageName = clazz.containingFile?.packageName?.asString()?.takeIf { it.isNotBlank() }
+        val packageName = clazz.containingFile?.packageName?.asString()
+            ?.takeIf { it.isNotBlank() }
             ?: throw IllegalStateException("Can't determine package for ${clazz.simpleName.asString()}")
 
         val simpleName = clazz.simpleName.asString()
@@ -32,7 +35,9 @@ object ServiceModelProxyGenerator : CodeGenerator {
         val fileName = "${simpleName}__Proxy"
 
         val file = environment.codeGenerator.createNewFile(
-            Dependencies(false), packageName, fileName
+            Dependencies(false),
+            packageName,
+            fileName
         )
 
         OutputStreamWriter(file, Charsets.UTF_8).use { writer ->
@@ -40,11 +45,16 @@ object ServiceModelProxyGenerator : CodeGenerator {
             writer.write("import $qualifiedName\n")
             writer.write("import org.spruce.api.gateway.GatewayCall\n")
             writer.write("import org.spruce.api.gateway.SpruceGatewayClient\n")
+            writer.write("import org.spruce.api.lock.DistributedLockManager\n")
             writer.write("import java.util.concurrent.CompletableFuture\n")
-            writer.write("import javax.annotation.processing.Generated\n\n")
+            writer.write("import javax.annotation.processing.Generated\n")
+            writer.write("import java.time.Duration\n\n")
 
             writer.write("@Generated(\"Spruce KSP\")\n")
-            writer.write("class $fileName(private val gatewayClient: SpruceGatewayClient) : $simpleName {\n")
+            writer.write("class $fileName(\n")
+            writer.write("    private val gatewayClient: SpruceGatewayClient,\n")
+            writer.write("    private val lockManager: DistributedLockManager\n")
+            writer.write(") : $simpleName {\n")
 
             for (function in clazz.getAllFunctions()) {
                 val methodName = function.simpleName.asString()
@@ -59,7 +69,7 @@ object ServiceModelProxyGenerator : CodeGenerator {
                     continue
                 }
 
-                val typeArg = returnType?.arguments?.firstOrNull()?.type?.resolve()
+                val typeArg = returnType.arguments.firstOrNull()?.type?.resolve()
                 val responseTypeFqcn = typeArg?.declaration?.qualifiedName?.asString() ?: continue
 
                 if (function.parameters.size != 1) {
@@ -69,7 +79,7 @@ object ServiceModelProxyGenerator : CodeGenerator {
 
                 val param = function.parameters.first()
                 val paramFqcn = param.type.resolve().declaration.qualifiedName?.asString() ?: continue
-                val paramName = "request"
+                val paramName = param.name?.asString() ?: "request"
 
                 val serviceCallAnnotation = function.annotations.firstOrNull {
                     it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.service.ServiceCall"
@@ -80,19 +90,32 @@ object ServiceModelProxyGenerator : CodeGenerator {
                     ?.find { it.name?.asString() == "value" }
                     ?.value as? String ?: methodName
 
+                val call = """
+                    gatewayClient.call(
+                        GatewayCall.of(
+                            "$serviceName",
+                            "$actionName",
+                            $paramName,
+                            $responseTypeFqcn::class.java
+                        )
+                    )
+                """.trimIndent()
+
                 writer.write("    override fun $methodName($paramName: $paramFqcn): CompletableFuture<$responseTypeFqcn> {\n")
-                writer.write("        return gatewayClient.call(\n")
-                writer.write("            GatewayCall.of(\n")
-                writer.write("                \"$serviceName\",\n")
-                writer.write("                \"$actionName\",\n")
-                writer.write("                $paramName,\n")
-                writer.write("                $responseTypeFqcn::class.java\n")
-                writer.write("            )\n")
-                writer.write("        )\n")
+
+                if (LockInvocationGenerator.hasLock(function)) {
+                    val wrapped = LockInvocationGenerator.wrapAsyncReturnCall(function, call)
+                        .prependIndent("        ")
+
+                    writer.write("$wrapped\n")
+                } else {
+                    writer.write("        return $call\n")
+                }
+
                 writer.write("    }\n\n")
             }
 
-            writer.write("}")
+            writer.write("}\n")
         }
 
         return true

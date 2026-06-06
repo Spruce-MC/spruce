@@ -1,6 +1,7 @@
 package org.spruce.loader.commons
 
 import org.spruce.api.gateway.SpruceGatewayClient
+import org.spruce.api.lock.DistributedLockManager
 import org.spruce.api.plugin.SpruceContext
 import org.spruce.api.plugin.SprucePlugin
 import org.spruce.core.SpruceContextImpl
@@ -58,13 +59,22 @@ class SprucePluginLoader(
 
         // Models
         val gatewayClient = context.get(SpruceGatewayClient::class.java)
+        val lockManager = context.get(DistributedLockManager::class.java)
         jarFile.getEntry("META-INF/spruce.models.txt")?.let { entry ->
             jarFile.getInputStream(entry).bufferedReader().readLines().forEach { interfaceName ->
                 try {
                     val interfaceClass = classLoader.loadClass(interfaceName)
                     val proxyClass = classLoader.loadClass("${interfaceName}__Proxy")
-                    val constructor = proxyClass.getConstructor(Class.forName("org.spruce.api.gateway.SpruceGatewayClient"))
-                    val proxyInstance = constructor.newInstance(gatewayClient)
+
+                    val constructor = proxyClass.getConstructor(
+                        SpruceGatewayClient::class.java,
+                        DistributedLockManager::class.java
+                    )
+
+                    val proxyInstance = constructor.newInstance(
+                        gatewayClient,
+                        lockManager
+                    )
 
                     @Suppress("UNCHECKED_CAST")
                     context.register(interfaceClass as Class<Any>, proxyInstance as Any)

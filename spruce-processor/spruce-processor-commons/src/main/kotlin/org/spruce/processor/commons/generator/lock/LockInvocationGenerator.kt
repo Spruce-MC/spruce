@@ -65,6 +65,20 @@ object LockInvocationGenerator {
         """.trimIndent()
     }
 
+    fun wrapAsyncReturnCall(fn: KSFunctionDeclaration, call: String): String {
+        val data = read(fn)
+
+        return """
+        return lockManager.withLockAsync(
+            ${data.keyExpression},
+            Duration.ofMillis(${data.ttlMillis}L),
+            Duration.ofMillis(${data.acquireTimeoutMillis}L)
+        ) {
+            $call
+        }
+    """.trimIndent()
+    }
+
     fun read(fn: KSFunctionDeclaration): LockData {
         val annotation = fn.annotations.first {
             it.annotationType.resolve().declaration.qualifiedName?.asString() == LOCK_ANNOTATION

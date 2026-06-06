@@ -48,7 +48,7 @@ repositories {
 
 ```kotlin
 dependencies {
-    implementation("org.spruce:spruce-api:1.0.1")
+    implementation("org.spruce:spruce-api:1.1.0")
 }
 ```
 
@@ -61,10 +61,10 @@ plugins {
 
 dependencies {
     // For Spigot plugins
-    ksp("org.spruce:spruce-processor-spigot:1.0.1")
+    ksp("org.spruce:spruce-processor-spigot:1.1.0")
 
     // Or for Velocity plugins
-    ksp("org.spruce:spruce-processor-velocity:1.0.1")
+    ksp("org.spruce:spruce-processor-velocity:1.1.0")
 }
 ```
 
