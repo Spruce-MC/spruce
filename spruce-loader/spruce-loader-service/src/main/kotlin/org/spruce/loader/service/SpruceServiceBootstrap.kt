@@ -6,7 +6,7 @@ import org.spruce.api.service.SpruceService
 import org.spruce.core.SpruceContextImpl
 import org.spruce.core.lock.redis.RedisDistributedLockManager
 import org.spruce.loader.commons.SpruceLifecycleManager
-import org.spruce.service.SpruceServiceRuntime
+import org.spruce.core.service.SpruceServiceRuntime
 import java.util.logging.Logger
 
 class SpruceServiceBootstrap(

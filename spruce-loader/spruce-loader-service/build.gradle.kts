@@ -15,7 +15,6 @@ tasks {
 dependencies {
     implementation(project(":spruce-core"))
     implementation(project(":spruce-api"))
-    implementation(project(":spruce-service-common"))
     implementation(project(":spruce-loader:spruce-loader-commons"))
 
     implementation("redis.clients:jedis:5.1.0")

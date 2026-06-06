@@ -1,7 +1,7 @@
 package org.spruce.gateway
 
 import org.spruce.api.event.GatewayEventEnvelope
-import org.spruce.service.AbstractSpruceService
+import org.spruce.core.service.AbstractSpruceService
 import redis.clients.jedis.StreamEntryID
 import redis.clients.jedis.params.XAddParams
 import redis.clients.jedis.params.XReadGroupParams

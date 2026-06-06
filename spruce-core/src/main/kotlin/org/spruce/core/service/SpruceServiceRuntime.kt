@@ -1,4 +1,4 @@
-package org.spruce.service
+package org.spruce.core.service
 
 import org.spruce.api.event.GatewayEvent
 import org.spruce.api.event.GatewayEventEnvelope

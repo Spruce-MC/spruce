@@ -6,7 +6,6 @@ include("spruce-loader")
 include("spruce-processor")
 include("spruce-proto")
 include("spruce-gateway")
-include("spruce-service-common")
 include("spruce-loader:spruce-loader-spigot")
 findProject(":spruce-loader:spruce-loader-spigot")?.name = "spruce-loader-spigot"
 include("spruce-loader:spruce-loader-commons")
