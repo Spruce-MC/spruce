@@ -1,7 +1,7 @@
 package org.spruce.core
 
-import org.spruce.api.plugin.Inject
-import org.spruce.api.plugin.SpruceContext
+import org.spruce.api.annotation.Inject
+import org.spruce.api.context.SpruceContext
 import java.util.concurrent.ConcurrentHashMap
 
 class SpruceContextImpl : SpruceContext {

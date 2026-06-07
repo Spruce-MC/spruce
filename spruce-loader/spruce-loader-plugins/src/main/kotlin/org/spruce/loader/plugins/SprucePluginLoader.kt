@@ -1,8 +1,8 @@
 package org.spruce.loader.plugins
 
+import org.spruce.api.context.SpruceContext
 import org.spruce.api.gateway.SpruceGatewayClient
 import org.spruce.api.lock.DistributedLockManager
-import org.spruce.api.plugin.SpruceContext
 import org.spruce.api.plugin.SprucePlugin
 import org.spruce.core.SpruceContextImpl
 import java.io.File

@@ -10,7 +10,7 @@ object FileConfigLoaderSpigotGenerator : CodeGenerator {
 
     override fun process(clazz: KSClassDeclaration, environment: SymbolProcessorEnvironment): Boolean {
         val annotation = clazz.annotations.firstOrNull {
-            it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.plugin.FileConfig"
+            it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.annotation.FileConfig"
         } ?: return false
 
         val filePath = annotation.arguments.find { it.name?.asString() == "value" }?.value as? String ?: return false
@@ -29,7 +29,7 @@ object FileConfigLoaderSpigotGenerator : CodeGenerator {
             writer.write("import java.util.jar.JarFile\n")
             writer.write("import org.bukkit.plugin.java.JavaPlugin\n")
             writer.write("import org.bukkit.configuration.file.YamlConfiguration\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             writer.write("import $qualifiedName\n\n")
 
             writer.write("object ${simpleName}__Loader {\n")
@@ -67,7 +67,7 @@ object FileConfigLoaderSpigotGenerator : CodeGenerator {
     ) {
         for (field in clazz.getAllProperties()) {
             if (field.annotations.any {
-                    it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.plugin.Inject"
+                    it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.annotation.Inject"
                 }) continue
 
             val name = field.simpleName.asString()

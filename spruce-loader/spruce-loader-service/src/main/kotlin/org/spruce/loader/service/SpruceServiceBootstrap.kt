@@ -1,7 +1,7 @@
 package org.spruce.loader.service
 
+import org.spruce.api.context.SpruceContext
 import org.spruce.api.lock.DistributedLockManager
-import org.spruce.api.plugin.SpruceContext
 import org.spruce.api.service.SpruceService
 import org.spruce.core.SpruceContextImpl
 import org.spruce.core.lock.redis.RedisDistributedLockManager

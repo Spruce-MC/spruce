@@ -10,7 +10,7 @@ import java.io.OutputStreamWriter
 
 object ServiceScheduledTaskRegistryGenerator : CodeGenerator {
 
-    private const val SCHEDULED = "org.spruce.api.plugin.Scheduled"
+    private const val SCHEDULED = "org.spruce.api.annotation.Scheduled"
 
     override fun process(clazz: KSClassDeclaration, environment: SymbolProcessorEnvironment): Boolean {
         val methods = clazz.getAllFunctions()
@@ -43,7 +43,7 @@ object ServiceScheduledTaskRegistryGenerator : CodeGenerator {
         OutputStreamWriter(file, Charsets.UTF_8).use { writer ->
             writer.write("package $packageName\n\n")
             writer.write("import $qualifiedName\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             writer.write("import org.spruce.service.SpruceServiceRuntime\n")
 
             if (hasLocks) {

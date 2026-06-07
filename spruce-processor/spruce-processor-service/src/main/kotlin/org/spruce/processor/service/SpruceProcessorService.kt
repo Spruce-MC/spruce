@@ -38,7 +38,7 @@ class SpruceProcessorService(
 
         val configClassNames = mutableListOf<String>()
 
-        val configs = resolver.getSymbolsWithAnnotation("org.spruce.api.plugin.Configuration")
+        val configs = resolver.getSymbolsWithAnnotation("org.spruce.api.annotation.Configuration")
             .filterIsInstance<KSClassDeclaration>()
             .toList()
 
@@ -49,7 +49,7 @@ class SpruceProcessorService(
             }
         }
 
-        val components = resolver.getSymbolsWithAnnotation("org.spruce.api.plugin.Component")
+        val components = resolver.getSymbolsWithAnnotation("org.spruce.api.annotation.Component")
             .filterIsInstance<KSClassDeclaration>()
             .toList()
 

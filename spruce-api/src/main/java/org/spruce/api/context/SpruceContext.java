@@ -1,4 +1,4 @@
-package org.spruce.api.plugin;
+package org.spruce.api.context;
 
 /**
  * Context object passed to plugins on load.

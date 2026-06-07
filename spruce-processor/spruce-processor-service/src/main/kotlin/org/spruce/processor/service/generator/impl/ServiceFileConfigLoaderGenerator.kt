@@ -11,7 +11,7 @@ object ServiceFileConfigLoaderGenerator : CodeGenerator {
     override fun process(clazz: KSClassDeclaration, environment: SymbolProcessorEnvironment): Boolean {
         val annotation = clazz.annotations.firstOrNull {
             it.annotationType.resolve().declaration.qualifiedName?.asString() ==
-                    "org.spruce.api.plugin.FileConfig"
+                    "org.spruce.api.annotation.FileConfig"
         } ?: return false
 
         val filePath = annotation.arguments
@@ -35,7 +35,7 @@ object ServiceFileConfigLoaderGenerator : CodeGenerator {
             writer.write("import com.fasterxml.jackson.databind.ObjectMapper\n")
             writer.write("import com.fasterxml.jackson.dataformat.yaml.YAMLFactory\n")
             writer.write("import com.fasterxml.jackson.module.kotlin.registerKotlinModule\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             writer.write("import org.spruce.service.SpruceServiceRuntime\n")
             writer.write("import $qualifiedName\n\n")
 

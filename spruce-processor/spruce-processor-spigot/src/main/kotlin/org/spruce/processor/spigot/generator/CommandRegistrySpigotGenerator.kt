@@ -42,7 +42,7 @@ object CommandRegistrySpigotGenerator : CodeGenerator {
             writer.write("import org.bukkit.command.Command\n")
             writer.write("import org.bukkit.command.CommandSender\n")
             writer.write("import org.bukkit.command.CommandMap\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             if (hasLocks) {
                 LockInvocationGenerator.writeImports(writer)
             }

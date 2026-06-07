@@ -14,7 +14,7 @@ object InjectorGenerator : CodeGenerator {
 
         val fields = clazz.getAllProperties().filter { field ->
             field.annotations.any {
-                it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.plugin.Inject"
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.annotation.Inject"
             }
         }
 
@@ -29,7 +29,7 @@ object InjectorGenerator : CodeGenerator {
 
         OutputStreamWriter(file, Charsets.UTF_8).use { writer ->
             writer.write("package $packageName\n\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             writer.write("import ${clazz.qualifiedName!!.asString()}\n\n")
             writer.write("object $injectorName {\n")
             writer.write("    fun register(ctx: SpruceContext, target: $simpleName) {\n")

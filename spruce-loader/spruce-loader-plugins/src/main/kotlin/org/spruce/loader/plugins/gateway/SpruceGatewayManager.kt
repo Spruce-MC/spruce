@@ -2,7 +2,7 @@ package org.spruce.loader.plugins.gateway
 
 import org.spruce.api.gateway.SpruceGatewayClient
 import org.spruce.api.lock.DistributedLockManager
-import org.spruce.api.plugin.SpruceContext
+import org.spruce.api.context.SpruceContext
 import org.spruce.core.SpruceGatewayClientImpl
 import org.spruce.core.lock.gateway.GatewayDistributedLockManager
 import java.util.concurrent.Executors

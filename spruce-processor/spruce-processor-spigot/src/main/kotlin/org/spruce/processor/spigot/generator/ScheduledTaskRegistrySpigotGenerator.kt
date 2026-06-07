@@ -16,7 +16,7 @@ object ScheduledTaskRegistrySpigotGenerator : CodeGenerator {
             .filter { (_, fn) ->
                 fn.annotations.any {
                     it.annotationType.resolve().declaration.qualifiedName?.asString() ==
-                            "org.spruce.api.plugin.Scheduled"
+                            "org.spruce.api.annotation.Scheduled"
                 }
             }
             .toList()
@@ -41,7 +41,7 @@ object ScheduledTaskRegistrySpigotGenerator : CodeGenerator {
             writer.write("import org.bukkit.Bukkit\n")
             writer.write("import org.bukkit.plugin.java.JavaPlugin\n")
             writer.write("import org.bukkit.scheduler.BukkitTask\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             if (hasLocks) {
                 LockInvocationGenerator.writeImports(writer)
             }
@@ -58,7 +58,7 @@ object ScheduledTaskRegistrySpigotGenerator : CodeGenerator {
             for ((index, method) in methods) {
                 val annotation = method.annotations.first {
                     it.annotationType.resolve().declaration.qualifiedName?.asString() ==
-                            "org.spruce.api.plugin.Scheduled"
+                            "org.spruce.api.annotation.Scheduled"
                 }
 
                 val delay = readLongValue("delay", annotation)

@@ -44,7 +44,7 @@ object EventListenerRegistryVelocityGenerator : CodeGenerator {
             writer.write("import com.velocitypowered.api.event.EventTask\n")
             writer.write("import com.velocitypowered.api.event.Continuation\n")
             writer.write("import org.spruce.api.plugin.SpruceLoaderPlugin\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             if (hasLocks) {
                 LockInvocationGenerator.writeImports(writer)
                 writer.write("import org.spruce.api.lock.LockAcquireException\n")

@@ -32,7 +32,7 @@ abstract class AbstractSprucePluginProcessor(
         }
 
         val configClassNames = mutableListOf<String>()
-        val configs = resolver.getSymbolsWithAnnotation("org.spruce.api.plugin.Configuration")
+        val configs = resolver.getSymbolsWithAnnotation("org.spruce.api.annotation.Configuration")
             .filterIsInstance<KSClassDeclaration>()
 
         for (config in configs) {
@@ -42,7 +42,7 @@ abstract class AbstractSprucePluginProcessor(
             }
         }
 
-        val components = resolver.getSymbolsWithAnnotation("org.spruce.api.plugin.Component")
+        val components = resolver.getSymbolsWithAnnotation("org.spruce.api.annotation.Component")
             .filterIsInstance<KSClassDeclaration>()
 
         for (component in components) {

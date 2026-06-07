@@ -42,7 +42,7 @@ object EventListenerRegistrySpigotGenerator : CodeGenerator {
             writer.write("import org.bukkit.event.Listener\n")
             writer.write("import org.bukkit.event.EventHandler\n")
             writer.write("import org.bukkit.plugin.java.JavaPlugin\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             if (hasLocks) {
                 LockInvocationGenerator.writeImports(writer)
             }

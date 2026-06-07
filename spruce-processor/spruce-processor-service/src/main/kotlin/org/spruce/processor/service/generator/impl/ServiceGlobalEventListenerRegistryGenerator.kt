@@ -9,7 +9,7 @@ import java.io.OutputStreamWriter
 
 object ServiceGlobalEventListenerRegistryGenerator : CodeGenerator {
 
-    private const val GLOBAL_EVENT_LISTENER = "org.spruce.api.plugin.GlobalEventListener"
+    private const val GLOBAL_EVENT_LISTENER = "org.spruce.api.event.GlobalEventListener"
 
     override fun process(clazz: KSClassDeclaration, environment: SymbolProcessorEnvironment): Boolean {
         val listeners = clazz.getAllFunctions()
@@ -42,7 +42,7 @@ object ServiceGlobalEventListenerRegistryGenerator : CodeGenerator {
         OutputStreamWriter(file, Charsets.UTF_8).use { writer ->
             writer.write("package $packageName\n\n")
             writer.write("import $qualifiedName\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             writer.write("import org.spruce.service.SpruceServiceRuntime\n")
             writer.write("import java.util.concurrent.CompletableFuture\n")
 

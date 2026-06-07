@@ -14,7 +14,7 @@ object GlobalEventListenerRegistryGenerator : CodeGenerator {
             .filter { fn ->
                 fn.annotations.any {
                     it.annotationType.resolve().declaration.qualifiedName?.asString() ==
-                            "org.spruce.api.plugin.GlobalEventListener"
+                            "org.spruce.api.event.GlobalEventListener"
                 }
             }
             .toList()
@@ -38,7 +38,7 @@ object GlobalEventListenerRegistryGenerator : CodeGenerator {
 
         OutputStreamWriter(file, Charsets.UTF_8).use { writer ->
             writer.write("package $packageName\n\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             writer.write("import org.spruce.api.gateway.SpruceGatewayClient\n")
             if (hasLocks) {
                 LockInvocationGenerator.writeImports(writer)

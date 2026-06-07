@@ -1,7 +1,7 @@
 package org.spruce.loader.commons
 
-import org.spruce.api.plugin.PostConstruct
-import org.spruce.api.plugin.PreDestroy
+import org.spruce.api.annotation.PostConstruct
+import org.spruce.api.annotation.PreDestroy
 import java.util.logging.Logger
 
 class SpruceLifecycleManager(

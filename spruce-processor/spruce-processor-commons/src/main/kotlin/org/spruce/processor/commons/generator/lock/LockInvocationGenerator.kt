@@ -6,7 +6,7 @@ import java.io.Writer
 
 object LockInvocationGenerator {
 
-    private const val LOCK_ANNOTATION = "org.spruce.api.plugin.WithDistributedLock"
+    private const val LOCK_ANNOTATION = "org.spruce.api.annotation.WithDistributedLock"
 
     fun hasLock(fn: KSFunctionDeclaration): Boolean {
         return fn.annotations.any {

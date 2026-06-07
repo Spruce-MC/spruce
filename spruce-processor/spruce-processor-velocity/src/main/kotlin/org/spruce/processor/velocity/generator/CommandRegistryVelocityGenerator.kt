@@ -40,7 +40,7 @@ object CommandRegistryVelocityGenerator : CodeGenerator {
             writer.write("package $packageName\n\n")
             writer.write("import com.velocitypowered.api.command.SimpleCommand\n")
             writer.write("import com.velocitypowered.api.command.CommandManager\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             writer.write("import org.spruce.api.plugin.SpruceLoaderPlugin\n")
             if (hasLocks) {
                 LockInvocationGenerator.writeImports(writer)

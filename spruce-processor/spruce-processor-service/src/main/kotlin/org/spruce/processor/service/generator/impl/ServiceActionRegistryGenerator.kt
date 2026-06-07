@@ -37,7 +37,7 @@ object ServiceActionRegistryGenerator : CodeGenerator {
         OutputStreamWriter(file, Charsets.UTF_8).use { writer ->
             writer.write("package $packageName\n\n")
             writer.write("import $qualifiedName\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             writer.write("import org.spruce.service.SpruceServiceRuntime\n")
             writer.write("import java.util.concurrent.CompletableFuture\n")
 

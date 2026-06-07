@@ -16,7 +16,7 @@ object ScheduledTaskRegistryVelocityGenerator : CodeGenerator {
             .filter { (_, fn) ->
                 fn.annotations.any {
                     it.annotationType.resolve().declaration.qualifiedName?.asString() ==
-                            "org.spruce.api.plugin.Scheduled"
+                            "org.spruce.api.annotation.Scheduled"
                 }
             }
             .toList()
@@ -39,7 +39,7 @@ object ScheduledTaskRegistryVelocityGenerator : CodeGenerator {
         OutputStreamWriter(file, Charsets.UTF_8).use { writer ->
             writer.write("package $packageName\n\n")
             writer.write("import com.velocitypowered.api.scheduler.Scheduler\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n")
             writer.write("import org.spruce.api.plugin.SpruceLoaderPlugin\n")
             writer.write("import ${clazz.qualifiedName!!.asString()}\n")
             writer.write("import java.time.Duration\n")
@@ -60,7 +60,7 @@ object ScheduledTaskRegistryVelocityGenerator : CodeGenerator {
             for ((index, method) in methods) {
                 val annotation = method.annotations.first {
                     it.annotationType.resolve().declaration.qualifiedName?.asString() ==
-                            "org.spruce.api.plugin.Scheduled"
+                            "org.spruce.api.annotation.Scheduled"
                 }
 
                 val delay = readLongValue("delay", annotation)

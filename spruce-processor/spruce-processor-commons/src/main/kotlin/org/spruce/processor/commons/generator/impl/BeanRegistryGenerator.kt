@@ -9,11 +9,11 @@ import java.io.OutputStreamWriter
 object BeanRegistryGenerator : CodeGenerator {
 
     override fun process(clazz: KSClassDeclaration, environment: SymbolProcessorEnvironment): Boolean {
-        if (!clazz.annotations.any { it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.plugin.Configuration" })
+        if (!clazz.annotations.any { it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.annotation.Configuration" })
             return false
 
         val beans = clazz.getAllFunctions().filter { fn ->
-            fn.annotations.any { it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.plugin.Bean" }
+            fn.annotations.any { it.annotationType.resolve().declaration.qualifiedName?.asString() == "org.spruce.api.annotation.Bean" }
         }
 
         if (beans.none()) return false
@@ -30,7 +30,7 @@ object BeanRegistryGenerator : CodeGenerator {
         OutputStreamWriter(file, Charsets.UTF_8).use { writer ->
             writer.write("package $packageName\n\n")
             writer.write("import $className\n")
-            writer.write("import org.spruce.api.plugin.SpruceContext\n\n")
+            writer.write("import org.spruce.api.context.SpruceContext\n\n")
             writer.write("object $genName {\n")
             writer.write("    fun register(ctx: SpruceContext) {\n")
             writer.write("        val config = $simpleName()\n")
